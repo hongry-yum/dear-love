@@ -14,18 +14,41 @@
 4. 지도의 마커나 오른쪽 목록에서 편지를 클릭하면,
    - 봉인된 장소의 반경 안에 있을 때는 편지를 바로 읽을 수 있고,
    - 반경 밖에 있으면 🔒 잠금 상태와 함께 얼마나 더 가까이 가야 하는지 알려줍니다.
+5. 다른 사람의 휴대폰에서도 같은 사이트에 접속해 같은 장소에 있으면 그 편지를 열어볼 수 있어요(편지는 기기가 아니라 서버 DB에 저장됩니다).
+6. 내가 쓴 편지는 같은 브라우저에서만 삭제할 수 있어요(브라우저에 저장된 삭제 권한 토큰으로 확인).
 
 ## 동작 원리
 
 - 브라우저의 [Geolocation API](https://developer.mozilla.org/docs/Web/API/Geolocation_API)로 실시간 현재 위치를 추적합니다.
-- 편지를 봉인할 때의 좌표(위도/경도)와 함께 선택한 열람 반경을 저장합니다.
-- 편지를 열람할 때마다 [Haversine 공식](https://en.wikipedia.org/wiki/Haversine_formula)으로 현재 위치와 편지 좌표 사이의 거리를 계산해, 반경 이내일 때만 내용을 보여줍니다.
+- 편지를 봉인하면 프론트엔드가 좌표(위도/경도)·반경·본문을 API로 전송하고, 서버(AWS Lambda)가 **AWS RDS(MySQL)** 에 저장합니다.
+- **위치 잠금은 클라이언트가 아니라 서버에서 검증합니다.** 편지를 열람할 때 현재 좌표를 API로 보내면, Lambda가 [Haversine 공식](https://en.wikipedia.org/wiki/Haversine_formula)으로 서버에 저장된 좌표와의 거리를 계산해 반경 이내일 때만 응답에 본문을 포함시킵니다. 반경 밖이면 본문 자체가 응답에 담기지 않으므로, 브라우저 개발자도구로 좌표를 조작해도 열람할 수 없습니다.
 - 지도 표시는 [Leaflet](https://leafletjs.com/) + [OpenStreetMap](https://www.openstreetmap.org/) 타일을 사용하며, 장소 이름은 [Nominatim](https://nominatim.org/) 역지오코딩으로 best-effort 표시됩니다.
-- 모든 편지는 **브라우저의 `localStorage`** 에 저장됩니다. 별도 서버/DB 없이 정적 파일만으로 동작하는 클라이언트 사이드 앱이라, 편지는 편지를 쓴 기기·브라우저에만 남습니다(다른 기기와 공유되지 않습니다).
+- 편지 삭제 권한은 봉인 시 발급되는 `ownerToken`을 브라우저 `localStorage`에만 저장해 확인합니다(편지 내용 자체는 localStorage에 저장되지 않습니다).
 
-## 로컬 실행
+## 백엔드 아키텍처 (AWS)
 
-빌드 과정 없이 정적 파일만으로 동작합니다.
+```
+브라우저 ── HTTPS ──▶ API Gateway (HTTP API) ──▶ Lambda (Node.js, mysql2) ──▶ RDS MySQL (VPC 내부, 비공개)
+```
+
+- **API Gateway**: `POST /letters`, `GET /letters`, `GET /letters/{id}`, `DELETE /letters/{id}` 라우트를 Lambda로 프록시. CORS 허용.
+- **Lambda**: 서울 리전(ap-northeast-2), VPC 내부에서 실행되어 RDS에 비공개로 접속. 콜드 스타트 시 테이블을 자동 생성합니다(`backend/index.mjs`의 `ensureSchema`).
+- **RDS MySQL**: `db.t4g.micro` (프리티어), 퍼블릭 접근 차단, Lambda 보안 그룹에서만 3306 포트 접근 허용.
+- 백엔드 소스는 `backend/` 폴더에 있습니다 (`backend/index.mjs`, `backend/package.json`).
+- API 주소는 `app.js` 상단의 `API_BASE` 상수에 하드코딩되어 있습니다.
+
+### 백엔드 재배포
+
+```bash
+cd backend
+npm install --omit=dev
+zip -qr function.zip index.mjs node_modules package.json
+aws lambda update-function-code --function-name dear-love-api --zip-file fileb://function.zip
+```
+
+## 로컬 실행 (프론트엔드)
+
+빌드 과정 없이 정적 파일만으로 동작합니다. 실제 배포된 AWS API(`app.js`의 `API_BASE`)를 그대로 사용합니다.
 
 ```bash
 npx serve .

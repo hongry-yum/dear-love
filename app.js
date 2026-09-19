@@ -1,58 +1,92 @@
 "use strict";
 
-const STORAGE_KEY = "dearlove.letters.v1";
+const API_BASE = "https://84mr6v30b7.execute-api.ap-northeast-2.amazonaws.com";
+const OWNER_TOKENS_KEY = "dearlove.ownerTokens.v1";
+const POLL_INTERVAL_MS = 6000;
 
-/** @typedef {{id:string,title:string,body:string,lat:number,lng:number,radius:number,createdAt:number,placeLabel:string}} Letter */
+/**
+ * @typedef {{id:string,title:string|null,lat:number,lng:number,radius:number,
+ *   placeLabel:string|null,createdAt:string,unlocked:boolean,distance:number}} LetterSummary
+ */
 
 const state = {
-  /** @type {Letter[]} */
-  letters: loadLetters(),
+  /** @type {LetterSummary[]} */
+  letters: [],
   /** @type {{lat:number,lng:number,accuracy:number}|null} */
   me: null,
   geoError: null,
 };
 
-// ---------- storage ----------
+// ---------- owner tokens (local "this is my letter" record, not the content) ----------
 
-function loadLetters() {
+function loadOwnerTokens() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return JSON.parse(localStorage.getItem(OWNER_TOKENS_KEY) || "{}");
   } catch {
-    return [];
+    return {};
   }
 }
 
-function saveLetters() {
+function saveOwnerToken(id, token) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.letters));
+    const map = loadOwnerTokens();
+    map[id] = token;
+    localStorage.setItem(OWNER_TOKENS_KEY, JSON.stringify(map));
   } catch {
-    showToast("저장 공간이 부족해 편지를 저장하지 못했어요.");
+    /* best-effort only */
   }
 }
 
-// ---------- geo helpers ----------
-
-function haversineMeters(lat1, lng1, lat2, lng2) {
-  const R = 6371000;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(a));
+function myOwnerTokenFor(id) {
+  return loadOwnerTokens()[id] || null;
 }
+
+// ---------- API ----------
+
+async function apiListLetters(lat, lng) {
+  const res = await fetch(`${API_BASE}/letters?lat=${lat}&lng=${lng}`);
+  if (!res.ok) throw new Error("list failed");
+  const data = await res.json();
+  return data.letters;
+}
+
+async function apiGetLetter(id, lat, lng) {
+  const res = await fetch(`${API_BASE}/letters/${id}?lat=${lat}&lng=${lng}`);
+  if (!res.ok) throw new Error("get failed");
+  return res.json();
+}
+
+async function apiCreateLetter(payload) {
+  const res = await fetch(`${API_BASE}/letters`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "create failed");
+  }
+  return res.json();
+}
+
+async function apiDeleteLetter(id, ownerToken) {
+  const res = await fetch(`${API_BASE}/letters/${id}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ownerToken }),
+  });
+  return res.ok;
+}
+
+// ---------- helpers ----------
 
 function formatDistance(m) {
   if (m < 1000) return `${Math.round(m)}m`;
   return `${(m / 1000).toFixed(1)}km`;
 }
 
-function formatDate(ts) {
-  const d = new Date(ts);
+function formatDate(iso) {
+  const d = new Date(iso);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(
     d.getDate()
   ).padStart(2, "0")}`;
@@ -99,21 +133,11 @@ function updateMeMarker() {
   }
 }
 
-function distanceToLetter(letter) {
-  if (!state.me) return Infinity;
-  return haversineMeters(state.me.lat, state.me.lng, letter.lat, letter.lng);
-}
-
-function isUnlocked(letter) {
-  return distanceToLetter(letter) <= letter.radius;
-}
-
 function renderMarkers() {
   const seen = new Set();
   for (const letter of state.letters) {
     seen.add(letter.id);
-    const unlocked = isUnlocked(letter);
-    const emoji = unlocked ? "🔓" : "🔒";
+    const emoji = letter.unlocked ? "🔓" : "🔒";
     let marker = letterMarkers.get(letter.id);
     if (!marker) {
       marker = L.marker([letter.lat, letter.lng], { icon: iconFor(emoji) })
@@ -140,20 +164,17 @@ function renderList() {
   const countEl = document.getElementById("letter-count");
   countEl.textContent = `${state.letters.length}통`;
 
-  const sorted = [...state.letters].sort((a, b) => distanceToLetter(a) - distanceToLetter(b));
+  const sorted = [...state.letters].sort((a, b) => a.distance - b.distance);
 
   listEl.innerHTML = "";
   for (const letter of sorted) {
-    const dist = distanceToLetter(letter);
-    const unlocked = dist <= letter.radius;
-
     const li = document.createElement("li");
     li.className = "letter-card";
     li.addEventListener("click", () => openReadModal(letter.id));
 
     const statusIcon = document.createElement("span");
     statusIcon.className = "status-icon";
-    statusIcon.textContent = unlocked ? "🔓" : "🔒";
+    statusIcon.textContent = letter.unlocked ? "🔓" : "🔒";
 
     const info = document.createElement("div");
     info.className = "info";
@@ -167,12 +188,10 @@ function renderList() {
     meta.textContent = `${formatDate(letter.createdAt)} · ${letter.placeLabel || "알 수 없는 장소"}`;
 
     const badge = document.createElement("span");
-    badge.className = `dist-badge ${unlocked ? "unlocked" : "locked"}`;
-    badge.textContent = unlocked
+    badge.className = `dist-badge ${letter.unlocked ? "unlocked" : "locked"}`;
+    badge.textContent = letter.unlocked
       ? "지금 열 수 있어요"
-      : Number.isFinite(dist)
-      ? `${formatDistance(dist)} 떨어짐`
-      : "위치 확인 중";
+      : `${formatDistance(letter.distance)} 떨어짐`;
 
     info.append(title, meta, badge);
     li.append(statusIcon, info);
@@ -183,6 +202,20 @@ function renderList() {
 function renderAll() {
   renderMarkers();
   renderList();
+}
+
+// ---------- syncing with the server ----------
+
+async function refreshLetters() {
+  if (!state.me) return;
+  try {
+    state.letters = await apiListLetters(state.me.lat, state.me.lng);
+    renderAll();
+  } catch {
+    const statusEl = document.getElementById("geo-status");
+    statusEl.textContent = "편지 목록을 불러오지 못했어요. 잠시 후 다시 시도할게요.";
+    statusEl.classList.add("err");
+  }
 }
 
 // ---------- geolocation watch ----------
@@ -213,7 +246,7 @@ function startWatch() {
         map._dl_centered = true;
       }
       updateMeMarker();
-      renderAll();
+      refreshLetters();
       refreshWriteModalLocation();
     },
     (err) => {
@@ -287,25 +320,23 @@ async function sealLetter() {
   sealBtn.disabled = true;
   sealBtn.textContent = "봉인 중…";
 
-  const placeLabel = await reverseGeocode(state.me.lat, state.me.lng);
-
-  /** @type {Letter} */
-  const letter = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    title,
-    body,
-    lat: state.me.lat,
-    lng: state.me.lng,
-    radius,
-    createdAt: Date.now(),
-    placeLabel,
-  };
-
-  state.letters.push(letter);
-  saveLetters();
-  renderAll();
-  hideModal("write-modal");
-  showToast("💌 편지를 이 자리에 봉인했어요.");
+  try {
+    const placeLabel = await reverseGeocode(state.me.lat, state.me.lng);
+    const { id, ownerToken } = await apiCreateLetter({
+      title,
+      body,
+      lat: state.me.lat,
+      lng: state.me.lng,
+      radius,
+      placeLabel,
+    });
+    saveOwnerToken(id, ownerToken);
+    await refreshLetters();
+    hideModal("write-modal");
+    showToast("💌 편지를 이 자리에 봉인했어요. 이제 다른 사람도 같은 장소에서 열어볼 수 있어요.");
+  } catch {
+    showToast("편지를 봉인하지 못했어요. 잠시 후 다시 시도해주세요.");
+  }
 
   sealBtn.disabled = false;
   sealBtn.textContent = "🔒 이 자리에 편지 봉인하기";
@@ -313,21 +344,28 @@ async function sealLetter() {
 
 // ---------- read modal ----------
 
-function openReadModal(id) {
-  const letter = state.letters.find((l) => l.id === id);
-  if (!letter) return;
-
+async function openReadModal(id) {
+  if (!state.me) return;
   const titleEl = document.getElementById("read-title");
   const bodyEl = document.getElementById("read-body");
   const actionsEl = document.getElementById("read-actions");
-  titleEl.textContent = letter.title || "제목 없는 편지";
+  titleEl.textContent = "불러오는 중…";
+  bodyEl.innerHTML = "";
   actionsEl.innerHTML = "";
+  showModal("read-modal");
 
-  const dist = distanceToLetter(letter);
-  const unlocked = dist <= letter.radius;
+  let letter;
+  try {
+    letter = await apiGetLetter(id, state.me.lat, state.me.lng);
+  } catch {
+    titleEl.textContent = "오류";
+    bodyEl.innerHTML = `<div class="read-locked">편지를 불러오지 못했어요.</div>`;
+    return;
+  }
 
-  if (unlocked) {
-    bodyEl.innerHTML = "";
+  titleEl.textContent = letter.title || "제목 없는 편지";
+
+  if (letter.unlocked) {
     const p = document.createElement("div");
     p.textContent = letter.body;
     const metaP = document.createElement("p");
@@ -342,31 +380,36 @@ function openReadModal(id) {
         <span class="big-icon">🔒</span>
         아직 이 편지를 열 수 없어요.<br />
         이 편지는 <strong>${letter.placeLabel || "다른 장소"}</strong>에서 봉인되었어요.<br />
-        현재 위치에서 <span class="dist">${formatDistance(dist)}</span> 더 가까이 가야
+        현재 위치에서 <span class="dist">${formatDistance(letter.distance)}</span> 더 가까이 가야
         (허용 반경 ${formatDistance(letter.radius)} 이내) 열 수 있어요.
       </div>`;
   }
 
-  const deleteBtn = document.createElement("button");
-  deleteBtn.className = "btn btn-ghost";
-  deleteBtn.textContent = "🗑 삭제";
-  deleteBtn.addEventListener("click", () => {
-    if (confirm("이 편지를 삭제할까요? 되돌릴 수 없어요.")) {
-      state.letters = state.letters.filter((l) => l.id !== id);
-      saveLetters();
-      renderAll();
-      hideModal("read-modal");
-      showToast("편지를 삭제했어요.");
-    }
-  });
+  const myToken = myOwnerTokenFor(id);
+  if (myToken) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn-ghost";
+    deleteBtn.textContent = "🗑 삭제";
+    deleteBtn.addEventListener("click", async () => {
+      if (confirm("이 편지를 삭제할까요? 되돌릴 수 없어요.")) {
+        const ok = await apiDeleteLetter(id, myToken);
+        if (ok) {
+          await refreshLetters();
+          hideModal("read-modal");
+          showToast("편지를 삭제했어요.");
+        } else {
+          showToast("삭제하지 못했어요.");
+        }
+      }
+    });
+    actionsEl.append(deleteBtn);
+  }
 
   const closeBtn = document.createElement("button");
   closeBtn.className = "btn btn-primary";
   closeBtn.textContent = "닫기";
   closeBtn.addEventListener("click", () => hideModal("read-modal"));
-
-  actionsEl.append(deleteBtn, closeBtn);
-  showModal("read-modal");
+  actionsEl.append(closeBtn);
 }
 
 // ---------- modal / toast utils ----------
@@ -391,7 +434,6 @@ function showToast(msg) {
 
 function init() {
   initMap();
-  renderAll();
   startWatch();
 
   document.getElementById("btn-write").addEventListener("click", openWriteModal);
@@ -412,8 +454,8 @@ function init() {
     }
   });
 
-  // re-check lock state periodically even if position hasn't changed
-  setInterval(renderAll, 4000);
+  // periodically pull the latest letters/lock state from the server
+  setInterval(refreshLetters, POLL_INTERVAL_MS);
 }
 
 document.addEventListener("DOMContentLoaded", init);
