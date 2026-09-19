@@ -108,7 +108,9 @@ export default function LetterPanel({ letters, geoStatus, auth, onLetterClick })
                 <p className="title">{letter.title || '제목 없는 편지'}</p>
                 <p className="meta">
                   {formatDate(letter.createdAt)}
-                  {letter.isPrivate && letter.relationshipDay != null ? ` (연애 ${letter.relationshipDay}일째)` : ''}
+                  {letter.isPrivate && letter.relationshipDay != null && (
+                    <span className="day-badge">❤️ {letter.relationshipDay}</span>
+                  )}
                   {' · '}
                   {letter.placeLabel || '알 수 없는 장소'}
                   {letter.isPrivate ? ' · 단둘이 보는 편지' : ''}
