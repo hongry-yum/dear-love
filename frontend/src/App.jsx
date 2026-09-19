@@ -149,7 +149,7 @@ export default function App() {
 
       <main className="layout">
         <MapView me={me} letters={letters} onLetterClick={setReadLetterId} />
-        <LetterPanel letters={letters} geoStatus={geoStatus} onLetterClick={setReadLetterId} />
+        <LetterPanel letters={letters} geoStatus={geoStatus} auth={auth} onLetterClick={setReadLetterId} />
       </main>
 
       {writeOpen && (
