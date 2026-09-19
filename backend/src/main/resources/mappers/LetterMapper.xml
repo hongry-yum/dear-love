@@ -12,23 +12,24 @@
     <result property="placeLabel" column="place_label"/>
     <result property="ownerToken" column="owner_token"/>
     <result property="username" column="username"/>
+    <result property="recipientUsername" column="recipient_username"/>
     <result property="createdAt" column="created_at"/>
   </resultMap>
 
   <insert id="insert" parameterType="com.dearlove.model.Letter">
-    INSERT INTO letters (id, title, body, lat, lng, radius_m, place_label, owner_token, username)
-    VALUES (#{id}, #{title}, #{body}, #{lat}, #{lng}, #{radius}, #{placeLabel}, #{ownerToken}, #{username})
+    INSERT INTO letters (id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username)
+    VALUES (#{id}, #{title}, #{body}, #{lat}, #{lng}, #{radius}, #{placeLabel}, #{ownerToken}, #{username}, #{recipientUsername})
   </insert>
 
   <select id="findRecent" resultMap="LetterResultMap">
-    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, created_at
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username, created_at
     FROM letters
     ORDER BY created_at DESC
     LIMIT #{limit}
   </select>
 
   <select id="findById" resultMap="LetterResultMap">
-    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, created_at
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username, created_at
     FROM letters
     WHERE id = #{id}
   </select>

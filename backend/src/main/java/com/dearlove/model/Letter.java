@@ -12,6 +12,7 @@ public class Letter {
     private String placeLabel;
     private String ownerToken;
     private String username;
+    private String recipientUsername;
     private LocalDateTime createdAt;
 
     public String getId() { return id; }
@@ -40,6 +41,9 @@ public class Letter {
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+
+    public String getRecipientUsername() { return recipientUsername; }
+    public void setRecipientUsername(String recipientUsername) { this.recipientUsername = recipientUsername; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

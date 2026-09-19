@@ -29,15 +29,40 @@ export async function login(username, password) {
   return res.json()
 }
 
-export async function listLetters(lat, lng) {
-  const res = await fetch(`${API_BASE}/letters?lat=${lat}&lng=${lng}`)
+export async function getProfile(token) {
+  const res = await fetch(`${API_BASE}/profile`, { headers: authHeaders(token) })
+  if (!res.ok) throw new Error(await readErrorMessage(res, '프로필을 불러오지 못했어요.'))
+  return res.json()
+}
+
+export async function setPartner(token, { partnerUsername, relationshipStartDate }) {
+  const res = await fetch(`${API_BASE}/profile/partner`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ partnerUsername, relationshipStartDate }),
+  })
+  if (!res.ok) throw new Error(await readErrorMessage(res, '연인 등록에 실패했어요.'))
+  return res.json()
+}
+
+export async function removePartner(token) {
+  const res = await fetch(`${API_BASE}/profile/partner`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  if (!res.ok) throw new Error(await readErrorMessage(res, '연인 등록 해제에 실패했어요.'))
+  return res.json()
+}
+
+export async function listLetters(lat, lng, token) {
+  const res = await fetch(`${API_BASE}/letters?lat=${lat}&lng=${lng}`, { headers: authHeaders(token) })
   if (!res.ok) throw new Error('list failed')
   const data = await res.json()
   return data.letters
 }
 
-export async function getLetter(id, lat, lng) {
-  const res = await fetch(`${API_BASE}/letters/${id}?lat=${lat}&lng=${lng}`)
+export async function getLetter(id, lat, lng, token) {
+  const res = await fetch(`${API_BASE}/letters/${id}?lat=${lat}&lng=${lng}`, { headers: authHeaders(token) })
   if (!res.ok) throw new Error('get failed')
   return res.json()
 }

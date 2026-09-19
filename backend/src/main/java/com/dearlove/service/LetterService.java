@@ -2,7 +2,9 @@ package com.dearlove.service;
 
 import com.dearlove.dto.*;
 import com.dearlove.mapper.LetterMapper;
+import com.dearlove.mapper.UserMapper;
 import com.dearlove.model.Letter;
+import com.dearlove.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,11 @@ public class LetterService {
     private static final int PLACE_LABEL_MAX_LEN = 200;
 
     private final LetterMapper letterMapper;
+    private final UserMapper userMapper;
 
-    public LetterService(LetterMapper letterMapper) {
+    public LetterService(LetterMapper letterMapper, UserMapper userMapper) {
         this.letterMapper = letterMapper;
+        this.userMapper = userMapper;
     }
 
     public CreateLetterResponse createLetter(CreateLetterRequest req, String username) {
@@ -31,6 +35,16 @@ public class LetterService {
         }
         if (req.lat() < -90 || req.lat() > 90 || req.lng() < -180 || req.lng() > 180) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "좌표 범위가 올바르지 않아요.");
+        }
+
+        String recipientUsername = null;
+        if (req.recipientUsername() != null && !req.recipientUsername().isBlank()) {
+            recipientUsername = AuthService.normalizeUsername(req.recipientUsername());
+            User author = userMapper.findByUsername(username);
+            if (author == null || author.getPartnerUsername() == null
+                    || !author.getPartnerUsername().equals(recipientUsername)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "등록된 연인에게만 편지를 보낼 수 있어요.");
+            }
         }
 
         Letter letter = new Letter();
@@ -43,34 +57,52 @@ public class LetterService {
         letter.setPlaceLabel(truncate(req.placeLabel(), PLACE_LABEL_MAX_LEN));
         letter.setOwnerToken(UUID.randomUUID().toString());
         letter.setUsername(username);
+        letter.setRecipientUsername(recipientUsername);
 
         letterMapper.insert(letter);
         return new CreateLetterResponse(letter.getId(), letter.getOwnerToken());
     }
 
-    public LetterListResponse listLetters(double lat, double lng) {
+    public LetterListResponse listLetters(double lat, double lng, String viewerUsername) {
         List<Letter> rows = letterMapper.findRecent(LIST_LIMIT);
         List<LetterSummaryResponse> letters = rows.stream()
                 .map(r -> {
                     double distance = haversineMeters(lat, lng, r.getLat(), r.getLng());
+                    boolean isPrivate = r.getRecipientUsername() != null;
+                    String lockReason = lockReason(r, distance, viewerUsername);
                     return new LetterSummaryResponse(
                             r.getId(), r.getTitle(), r.getLat(), r.getLng(), r.getRadius(),
-                            r.getPlaceLabel(), r.getUsername(), r.getCreatedAt(), distance <= r.getRadius(), distance
+                            r.getPlaceLabel(), r.getUsername(), isPrivate, r.getCreatedAt(),
+                            lockReason == null, lockReason, distance
                     );
                 })
                 .toList();
         return new LetterListResponse(letters);
     }
 
-    public LetterDetailResponse getLetter(String id, double lat, double lng) {
+    public LetterDetailResponse getLetter(String id, double lat, double lng, String viewerUsername) {
         Letter r = letterMapper.findById(id);
         if (r == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "편지를 찾을 수 없어요.");
         }
         double distance = haversineMeters(lat, lng, r.getLat(), r.getLng());
-        boolean unlocked = distance <= r.getRadius();
+        String lockReason = lockReason(r, distance, viewerUsername);
+        boolean unlocked = lockReason == null;
+        boolean isPrivate = r.getRecipientUsername() != null;
         String body = unlocked ? r.getBody() : null;
-        return new LetterDetailResponse(r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), r.getRadius(), r.getCreatedAt(), unlocked, distance);
+        return new LetterDetailResponse(
+                r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), isPrivate,
+                r.getRadius(), r.getCreatedAt(), unlocked, lockReason, distance
+        );
+    }
+
+    /** Returns null when unlocked, else "recipient" or "distance". */
+    private static String lockReason(Letter letter, double distance, String viewerUsername) {
+        boolean recipientOk = letter.getRecipientUsername() == null
+                || letter.getRecipientUsername().equals(viewerUsername);
+        if (!recipientOk) return "recipient";
+        if (distance > letter.getRadius()) return "distance";
+        return null;
     }
 
     /**

@@ -8,9 +8,11 @@ public record LetterDetailResponse(
         String body,
         String placeLabel,
         String authorUsername,
+        boolean isPrivate,
         int radius,
         LocalDateTime createdAt,
         boolean unlocked,
+        String lockReason,
         double distance
 ) {
 }

@@ -601,3 +601,46 @@ body {
 .auth-username strong {
   color: var(--ink);
 }
+
+/* ---------- profile ---------- */
+
+.profile-username {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.profile-username strong {
+  color: var(--ink);
+}
+
+.partner-view {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.partner-display {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.partner-heart {
+  font-size: 20px;
+}
+
+.partner-days {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.partner-days strong {
+  color: var(--accent-dark);
+  font-size: 16px;
+}
+
+.title-heart {
+  color: var(--accent);
+}

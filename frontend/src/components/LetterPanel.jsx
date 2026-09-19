@@ -25,14 +25,19 @@ export default function LetterPanel({ letters, geoStatus, onLetterClick }) {
         <ul className="letter-list">
           {sorted.map((letter) => (
             <li key={letter.id} className="letter-card" onClick={() => onLetterClick(letter.id)}>
-              <span className="status-icon">{letter.unlocked ? '🔓' : '🔒'}</span>
+              <span className="status-icon">{letter.isPrivate ? '❤️' : letter.unlocked ? '🔓' : '🔒'}</span>
               <div className="info">
                 <p className="title">{letter.title || '제목 없는 편지'}</p>
                 <p className="meta">
                   {formatDate(letter.createdAt)} · {letter.placeLabel || '알 수 없는 장소'}
+                  {letter.isPrivate ? ' · 단둘이 보는 편지' : ''}
                 </p>
                 <span className={`dist-badge ${letter.unlocked ? 'unlocked' : 'locked'}`}>
-                  {letter.unlocked ? '지금 열 수 있어요' : `${formatDistance(letter.distance)} 떨어짐`}
+                  {letter.unlocked
+                    ? '지금 열 수 있어요'
+                    : letter.lockReason === 'recipient'
+                      ? '나에게 온 편지가 아니에요'
+                      : `${formatDistance(letter.distance)} 떨어짐`}
                 </span>
               </div>
             </li>

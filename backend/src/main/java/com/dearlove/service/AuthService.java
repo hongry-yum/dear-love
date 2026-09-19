@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @Service
 public class AuthService {
 
-    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,20}$");
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-z0-9_]{3,20}$");
     private static final int SESSION_DAYS = 30;
 
     private final UserMapper userMapper;
@@ -33,12 +33,12 @@ public class AuthService {
     }
 
     public AuthResponse signup(SignupRequest req) {
-        String username = req.username() == null ? "" : req.username().trim();
+        String username = normalizeUsername(req.username());
         String password = req.password() == null ? "" : req.password();
 
         if (!USERNAME_PATTERN.matcher(username).matches()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "아이디는 영문/숫자/밑줄로 3~20자여야 해요.");
+                    "아이디는 영문 소문자/숫자/밑줄로 3~20자여야 해요.");
         }
         if (password.length() < 4 || password.length() > 100) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "비밀번호는 4자 이상이어야 해요.");
@@ -60,7 +60,7 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest req) {
-        String username = req.username() == null ? "" : req.username().trim();
+        String username = normalizeUsername(req.username());
         String password = req.password() == null ? "" : req.password();
 
         User user = userMapper.findByUsername(username);
@@ -89,6 +89,10 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요해요.");
         }
         return username;
+    }
+
+    static String normalizeUsername(String raw) {
+        return raw == null ? "" : raw.trim().toLowerCase();
     }
 
     private AuthResponse createSession(String username) {

@@ -10,8 +10,10 @@ public record LetterSummaryResponse(
         int radius,
         String placeLabel,
         String authorUsername,
+        boolean isPrivate,
         LocalDateTime createdAt,
         boolean unlocked,
+        String lockReason,
         double distance
 ) {
 }

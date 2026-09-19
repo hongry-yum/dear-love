@@ -29,17 +29,21 @@ public class LetterController {
     }
 
     @GetMapping
-    public LetterListResponse list(@RequestParam(required = false) Double lat, @RequestParam(required = false) Double lng) {
+    public LetterListResponse list(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @RequestParam(required = false) Double lat, @RequestParam(required = false) Double lng) {
         requireCoords(lat, lng);
-        return letterService.listLetters(lat, lng);
+        return letterService.listLetters(lat, lng, authService.resolveUsername(authorization));
     }
 
     @GetMapping("/{id}")
-    public LetterDetailResponse get(@PathVariable String id,
-                                     @RequestParam(required = false) Double lat,
-                                     @RequestParam(required = false) Double lng) {
+    public LetterDetailResponse get(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @PathVariable String id,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng) {
         requireCoords(lat, lng);
-        return letterService.getLetter(id, lat, lng);
+        return letterService.getLetter(id, lat, lng, authService.resolveUsername(authorization));
     }
 
     @DeleteMapping("/{id}")

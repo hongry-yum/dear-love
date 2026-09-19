@@ -74,9 +74,9 @@ export default function LandingPage({ onLogin, onSignup, onGuest }) {
               id="auth-username"
               type="text"
               autoComplete="username"
-              placeholder="영문/숫자/밑줄 3~20자"
+              placeholder="영문 소문자/숫자/밑줄 3~20자"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
               required
             />
 

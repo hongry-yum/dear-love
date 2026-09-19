@@ -8,13 +8,13 @@ export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, o
 
   useEffect(() => {
     let cancelled = false
-    getLetter(letterId, me.lat, me.lng)
+    getLetter(letterId, me.lat, me.lng, auth?.token)
       .then((data) => !cancelled && setLetter(data))
       .catch(() => !cancelled && setError(true))
     return () => {
       cancelled = true
     }
-  }, [letterId, me])
+  }, [letterId, me, auth])
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -43,7 +43,10 @@ export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, o
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal" role="dialog" aria-modal="true">
         <div className="modal-head">
-          <h2>{letter ? letter.title || '제목 없는 편지' : '불러오는 중…'}</h2>
+          <h2>
+            {letter?.isPrivate && <span className="title-heart">❤️ </span>}
+            {letter ? letter.title || '제목 없는 편지' : '불러오는 중…'}
+          </h2>
           <button className="btn-close" onClick={onClose} aria-label="닫기">✕</button>
         </div>
 
@@ -56,11 +59,19 @@ export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, o
               {formatDate(letter.createdAt)} ·{' '}
               {letter.authorUsername ? `${letter.authorUsername}님이 ` : ''}
               {letter.placeLabel || '이 장소'}에서 쓴 편지
+              {letter.isPrivate ? ' (나에게만)' : ''}
             </p>
           </>
         )}
 
-        {letter && !letter.unlocked && (
+        {letter && !letter.unlocked && letter.lockReason === 'recipient' && (
+          <div className="read-locked">
+            <span className="big-icon">❤️</span>
+            이 편지는 정해진 한 사람만 열어볼 수 있는 편지예요.
+          </div>
+        )}
+
+        {letter && !letter.unlocked && letter.lockReason === 'distance' && (
           <div className="read-locked">
             <span className="big-icon">🔒</span>
             아직 이 편지를 열 수 없어요.

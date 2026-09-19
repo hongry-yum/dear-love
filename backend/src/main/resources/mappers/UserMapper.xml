@@ -5,6 +5,8 @@
   <resultMap id="UserResultMap" type="com.dearlove.model.User">
     <id property="username" column="username"/>
     <result property="passwordHash" column="password_hash"/>
+    <result property="partnerUsername" column="partner_username"/>
+    <result property="relationshipStartDate" column="relationship_start_date"/>
     <result property="createdAt" column="created_at"/>
   </resultMap>
 
@@ -13,7 +15,18 @@
   </insert>
 
   <select id="findByUsername" resultMap="UserResultMap">
-    SELECT username, password_hash, created_at FROM users WHERE username = #{username}
+    SELECT username, password_hash, partner_username, relationship_start_date, created_at
+    FROM users WHERE username = #{username}
   </select>
+
+  <update id="updatePartner">
+    UPDATE users
+    SET partner_username = #{partnerUsername}, relationship_start_date = #{relationshipStartDate}
+    WHERE username = #{username}
+  </update>
+
+  <update id="clearPartner">
+    UPDATE users SET partner_username = NULL, relationship_start_date = NULL WHERE username = #{username}
+  </update>
 
 </mapper>

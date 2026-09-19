@@ -55,19 +55,22 @@ public class SchemaInitializer implements CommandLineRunner {
             stmt.execute(LETTERS_DDL);
             stmt.execute(USERS_DDL);
             stmt.execute(SESSIONS_DDL);
-            addUsernameColumnIfMissing(conn);
+            addColumnIfMissing(conn, "letters", "username", "VARCHAR(20) NULL AFTER owner_token");
+            addColumnIfMissing(conn, "letters", "recipient_username", "VARCHAR(20) NULL AFTER username");
+            addColumnIfMissing(conn, "users", "partner_username", "VARCHAR(20) NULL AFTER password_hash");
+            addColumnIfMissing(conn, "users", "relationship_start_date", "DATE NULL AFTER partner_username");
         }
     }
 
-    /** letters.username was added after the table already existed in production, so migrate defensively. */
-    private void addUsernameColumnIfMissing(Connection conn) throws Exception {
+    /** Columns added after their table already existed in production, so migrate defensively. */
+    private void addColumnIfMissing(Connection conn, String table, String column, String definition) throws Exception {
         boolean hasColumn;
-        try (ResultSet rs = conn.getMetaData().getColumns(null, null, "letters", "username")) {
+        try (ResultSet rs = conn.getMetaData().getColumns(null, null, table, column)) {
             hasColumn = rs.next();
         }
         if (!hasColumn) {
             try (Statement stmt = conn.createStatement()) {
-                stmt.execute("ALTER TABLE letters ADD COLUMN username VARCHAR(20) NULL AFTER owner_token");
+                stmt.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
             }
         }
     }

@@ -70,7 +70,7 @@ export default function MapView({ me, letters, onLetterClick }) {
     const seen = new Set()
     for (const letter of letters) {
       seen.add(letter.id)
-      const emoji = letter.unlocked ? '🔓' : '🔒'
+      const emoji = letter.isPrivate ? '❤️' : letter.unlocked ? '🔓' : '🔒'
       let marker = markersRef.current.get(letter.id)
       if (!marker) {
         marker = L.marker([letter.lat, letter.lng], { icon: iconFor(emoji) })
