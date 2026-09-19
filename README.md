@@ -28,22 +28,25 @@
 ## 백엔드 아키텍처 (AWS)
 
 ```
-브라우저 ── HTTPS ──▶ API Gateway (HTTP API) ──▶ Lambda (Node.js, mysql2) ──▶ RDS MySQL (VPC 내부, 비공개)
+브라우저 ── HTTPS ──▶ API Gateway (HTTP API) ──▶ Lambda (Spring Boot, MyBatis) ──▶ RDS MySQL (VPC 내부, 비공개)
 ```
 
 - **API Gateway**: `POST /letters`, `GET /letters`, `GET /letters/{id}`, `DELETE /letters/{id}` 라우트를 Lambda로 프록시. CORS 허용.
-- **Lambda**: 서울 리전(ap-northeast-2), VPC 내부에서 실행되어 RDS에 비공개로 접속. 콜드 스타트 시 테이블을 자동 생성합니다(`backend/index.mjs`의 `ensureSchema`).
+- **Lambda**: 서울 리전(ap-northeast-2), 런타임 `java21`, VPC 내부에서 실행되어 RDS에 비공개로 접속.
+  [aws-serverless-java-container](https://github.com/aws/serverless-java-container)로 API Gateway HTTP API(payload
+  v2.0) 요청을 그대로 Spring MVC 컨트롤러로 전달합니다(`StreamLambdaHandler`). 콜드 스타트 시 테이블을 자동
+  생성합니다(`SchemaInitializer`).
 - **RDS MySQL**: `db.t4g.micro` (프리티어), 퍼블릭 접근 차단, Lambda 보안 그룹에서만 3306 포트 접근 허용.
-- 백엔드 소스는 `backend/` 폴더에 있습니다 (`backend/index.mjs`, `backend/package.json`).
-- API 주소는 `app.js` 상단의 `API_BASE` 상수에 하드코딩되어 있습니다.
+- **DB 접근 계층**: MyBatis (`backend/src/main/resources/mappers/LetterMapper.xml` + `LetterMapper` 인터페이스).
+- 백엔드 소스는 `backend/` 폴더에 있는 Maven 프로젝트입니다 (Java 21, Spring Boot 3.5).
+- API 주소는 프론트엔드의 `API_BASE` 상수에 하드코딩되어 있습니다.
 
 ### 백엔드 재배포
 
 ```bash
 cd backend
-npm install --omit=dev
-zip -qr function.zip index.mjs node_modules package.json
-aws lambda update-function-code --function-name dear-love-api --zip-file fileb://function.zip
+mvn clean package -DskipTests
+aws lambda update-function-code --function-name dear-love-api --zip-file fileb://target/dear-love-api.jar
 ```
 
 ## 로컬 실행 (프론트엔드)

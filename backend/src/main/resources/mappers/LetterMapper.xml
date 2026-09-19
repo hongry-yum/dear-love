@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dearlove.mapper.LetterMapper">
+
+  <resultMap id="LetterResultMap" type="com.dearlove.model.Letter">
+    <id property="id" column="id"/>
+    <result property="title" column="title"/>
+    <result property="body" column="body"/>
+    <result property="lat" column="lat"/>
+    <result property="lng" column="lng"/>
+    <result property="radius" column="radius_m"/>
+    <result property="placeLabel" column="place_label"/>
+    <result property="ownerToken" column="owner_token"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <insert id="insert" parameterType="com.dearlove.model.Letter">
+    INSERT INTO letters (id, title, body, lat, lng, radius_m, place_label, owner_token)
+    VALUES (#{id}, #{title}, #{body}, #{lat}, #{lng}, #{radius}, #{placeLabel}, #{ownerToken})
+  </insert>
+
+  <select id="findRecent" resultMap="LetterResultMap">
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, created_at
+    FROM letters
+    ORDER BY created_at DESC
+    LIMIT #{limit}
+  </select>
+
+  <select id="findById" resultMap="LetterResultMap">
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, created_at
+    FROM letters
+    WHERE id = #{id}
+  </select>
+
+  <delete id="deleteByIdAndOwnerToken">
+    DELETE FROM letters WHERE id = #{id} AND owner_token = #{ownerToken}
+  </delete>
+
+</mapper>
