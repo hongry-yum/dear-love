@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dearlove.mapper.SessionMapper">
+
+  <resultMap id="SessionResultMap" type="com.dearlove.model.Session">
+    <id property="token" column="token"/>
+    <result property="username" column="username"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="expiresAt" column="expires_at"/>
+  </resultMap>
+
+  <insert id="insert" parameterType="com.dearlove.model.Session">
+    INSERT INTO sessions (token, username, expires_at)
+    VALUES (#{token}, #{username}, #{expiresAt})
+  </insert>
+
+  <select id="findValidByToken" resultMap="SessionResultMap">
+    SELECT token, username, created_at, expires_at
+    FROM sessions
+    WHERE token = #{token} AND expires_at > NOW()
+  </select>
+
+  <delete id="deleteByToken">
+    DELETE FROM sessions WHERE token = #{token}
+  </delete>
+
+</mapper>

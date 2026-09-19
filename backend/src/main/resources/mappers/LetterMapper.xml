@@ -11,29 +11,34 @@
     <result property="radius" column="radius_m"/>
     <result property="placeLabel" column="place_label"/>
     <result property="ownerToken" column="owner_token"/>
+    <result property="username" column="username"/>
     <result property="createdAt" column="created_at"/>
   </resultMap>
 
   <insert id="insert" parameterType="com.dearlove.model.Letter">
-    INSERT INTO letters (id, title, body, lat, lng, radius_m, place_label, owner_token)
-    VALUES (#{id}, #{title}, #{body}, #{lat}, #{lng}, #{radius}, #{placeLabel}, #{ownerToken})
+    INSERT INTO letters (id, title, body, lat, lng, radius_m, place_label, owner_token, username)
+    VALUES (#{id}, #{title}, #{body}, #{lat}, #{lng}, #{radius}, #{placeLabel}, #{ownerToken}, #{username})
   </insert>
 
   <select id="findRecent" resultMap="LetterResultMap">
-    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, created_at
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, created_at
     FROM letters
     ORDER BY created_at DESC
     LIMIT #{limit}
   </select>
 
   <select id="findById" resultMap="LetterResultMap">
-    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, created_at
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, created_at
     FROM letters
     WHERE id = #{id}
   </select>
 
   <delete id="deleteByIdAndOwnerToken">
     DELETE FROM letters WHERE id = #{id} AND owner_token = #{ownerToken}
+  </delete>
+
+  <delete id="deleteByIdAndUsername">
+    DELETE FROM letters WHERE id = #{id} AND username = #{username}
   </delete>
 
 </mapper>

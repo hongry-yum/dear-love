@@ -15,4 +15,6 @@ public interface LetterMapper {
     Letter findById(@Param("id") String id);
 
     int deleteByIdAndOwnerToken(@Param("id") String id, @Param("ownerToken") String ownerToken);
+
+    int deleteByIdAndUsername(@Param("id") String id, @Param("username") String username);
 }

@@ -24,7 +24,7 @@ public class LetterService {
         this.letterMapper = letterMapper;
     }
 
-    public CreateLetterResponse createLetter(CreateLetterRequest req) {
+    public CreateLetterResponse createLetter(CreateLetterRequest req, String username) {
         String body = req.body() == null ? "" : req.body().trim();
         if (body.isEmpty() || req.lat() == null || req.lng() == null || req.radius() == null || req.radius() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title/body/lat/lng/radius가 올바르지 않아요.");
@@ -42,6 +42,7 @@ public class LetterService {
         letter.setRadius(req.radius());
         letter.setPlaceLabel(truncate(req.placeLabel(), PLACE_LABEL_MAX_LEN));
         letter.setOwnerToken(UUID.randomUUID().toString());
+        letter.setUsername(username);
 
         letterMapper.insert(letter);
         return new CreateLetterResponse(letter.getId(), letter.getOwnerToken());
@@ -54,7 +55,7 @@ public class LetterService {
                     double distance = haversineMeters(lat, lng, r.getLat(), r.getLng());
                     return new LetterSummaryResponse(
                             r.getId(), r.getTitle(), r.getLat(), r.getLng(), r.getRadius(),
-                            r.getPlaceLabel(), r.getCreatedAt(), distance <= r.getRadius(), distance
+                            r.getPlaceLabel(), r.getUsername(), r.getCreatedAt(), distance <= r.getRadius(), distance
                     );
                 })
                 .toList();
@@ -69,14 +70,22 @@ public class LetterService {
         double distance = haversineMeters(lat, lng, r.getLat(), r.getLng());
         boolean unlocked = distance <= r.getRadius();
         String body = unlocked ? r.getBody() : null;
-        return new LetterDetailResponse(r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getRadius(), r.getCreatedAt(), unlocked, distance);
+        return new LetterDetailResponse(r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), r.getRadius(), r.getCreatedAt(), unlocked, distance);
     }
 
-    public DeleteResponse deleteLetter(String id, String ownerToken) {
-        if (ownerToken == null || ownerToken.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ownerToken이 필요해요.");
+    /**
+     * Deletes a letter if the caller proves ownership either way: a logged-in
+     * username matching the letter's author, or (for letters written before
+     * accounts existed) the anonymous ownerToken issued at creation time.
+     */
+    public DeleteResponse deleteLetter(String id, String requestingUsername, String ownerToken) {
+        int affected = 0;
+        if (requestingUsername != null) {
+            affected = letterMapper.deleteByIdAndUsername(id, requestingUsername);
         }
-        int affected = letterMapper.deleteByIdAndOwnerToken(id, ownerToken);
+        if (affected == 0 && ownerToken != null && !ownerToken.isBlank()) {
+            affected = letterMapper.deleteByIdAndOwnerToken(id, ownerToken);
+        }
         if (affected == 0) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없거나 편지를 찾을 수 없어요.");
         }

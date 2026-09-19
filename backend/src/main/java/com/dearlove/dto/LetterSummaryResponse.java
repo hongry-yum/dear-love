@@ -9,6 +9,7 @@ public record LetterSummaryResponse(
         double lng,
         int radius,
         String placeLabel,
+        String authorUsername,
         LocalDateTime createdAt,
         boolean unlocked,
         double distance

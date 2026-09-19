@@ -1,7 +1,9 @@
 package com.dearlove.controller;
 
 import com.dearlove.dto.*;
+import com.dearlove.service.AuthService;
 import com.dearlove.service.LetterService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,14 +13,19 @@ import org.springframework.web.bind.annotation.*;
 public class LetterController {
 
     private final LetterService letterService;
+    private final AuthService authService;
 
-    public LetterController(LetterService letterService) {
+    public LetterController(LetterService letterService, AuthService authService) {
         this.letterService = letterService;
+        this.authService = authService;
     }
 
     @PostMapping
-    public ResponseEntity<CreateLetterResponse> create(@RequestBody CreateLetterRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(letterService.createLetter(req));
+    public ResponseEntity<CreateLetterResponse> create(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @RequestBody CreateLetterRequest req) {
+        String username = authService.requireUsername(authorization);
+        return ResponseEntity.status(HttpStatus.CREATED).body(letterService.createLetter(req, username));
     }
 
     @GetMapping
@@ -36,8 +43,13 @@ public class LetterController {
     }
 
     @DeleteMapping("/{id}")
-    public DeleteResponse delete(@PathVariable String id, @RequestBody DeleteLetterRequest req) {
-        return letterService.deleteLetter(id, req.ownerToken());
+    public DeleteResponse delete(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @PathVariable String id,
+            @RequestBody(required = false) DeleteLetterRequest req) {
+        String username = authService.resolveUsername(authorization);
+        String ownerToken = req == null ? null : req.ownerToken();
+        return letterService.deleteLetter(id, username, ownerToken);
     }
 
     private static void requireCoords(Double lat, Double lng) {

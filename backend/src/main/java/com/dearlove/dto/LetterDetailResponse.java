@@ -7,6 +7,7 @@ public record LetterDetailResponse(
         String title,
         String body,
         String placeLabel,
+        String authorUsername,
         int radius,
         LocalDateTime createdAt,
         boolean unlocked,

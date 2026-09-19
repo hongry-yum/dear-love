@@ -11,6 +11,7 @@ public class Letter {
     private int radius;
     private String placeLabel;
     private String ownerToken;
+    private String username;
     private LocalDateTime createdAt;
 
     public String getId() { return id; }
@@ -36,6 +37,9 @@ public class Letter {
 
     public String getOwnerToken() { return ownerToken; }
     public void setOwnerToken(String ownerToken) { this.ownerToken = ownerToken; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
