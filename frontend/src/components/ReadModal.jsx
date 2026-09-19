@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getLetter, deleteLetter } from '../api.js'
-import { formatDate, formatDistance } from '../utils.js'
+import { formatDate, formatDateTime, formatDistance } from '../utils.js'
 
 export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, onDeleted, showToast }) {
   const [letter, setLetter] = useState(null)
@@ -85,6 +85,14 @@ export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, o
             현재 위치에서 <span className="dist">{formatDistance(letter.distance)}</span> 더 가까이 가야
             (허용 반경 {formatDistance(letter.radius)} 이내) 열 수 있어요.
           </div>
+        )}
+
+        {letter && auth && letter.authorUsername === auth.username && (
+          <p className="read-meta">
+            {letter.readAt
+              ? `✔️ ${letter.readByUsername ? `${letter.readByUsername}님이 ` : ''}${formatDateTime(letter.readAt)}에 읽었어요`
+              : '아직 아무도 읽지 않았어요'}
+          </p>
         )}
 
         <div className="modal-actions">

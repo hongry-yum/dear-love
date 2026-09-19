@@ -17,4 +17,6 @@ public interface LetterMapper {
     int deleteByIdAndOwnerToken(@Param("id") String id, @Param("ownerToken") String ownerToken);
 
     int deleteByIdAndUsername(@Param("id") String id, @Param("username") String username);
+
+    int markReadIfUnread(@Param("id") String id, @Param("username") String username);
 }

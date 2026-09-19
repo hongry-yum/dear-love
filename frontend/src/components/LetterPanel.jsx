@@ -203,6 +203,7 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
                   {' · '}
                   {letter.placeLabel || '알 수 없는 장소'}
                   {letter.isPrivate ? ' · 단둘이 보는 편지' : ''}
+                  {auth && letter.authorUsername === auth.username ? (letter.readAt ? ' · ✔️ 읽음' : ' · 아직 안 읽음') : ''}
                 </p>
                 <span className={`dist-badge ${letter.unlocked ? 'unlocked' : 'locked'}`}>
                   {letter.unlocked

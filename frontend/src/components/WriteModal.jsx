@@ -4,7 +4,7 @@ export default function WriteModal({ me, geoErrored, partnerUsername, onClose, o
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [radius, setRadius] = useState('100')
-  const [recipient, setRecipient] = useState('public') // 'public' | 'partner'
+  const [recipient, setRecipient] = useState(() => (partnerUsername ? 'partner' : 'public')) // 'public' | 'partner'
   const [sealing, setSealing] = useState(false)
 
   useEffect(() => {

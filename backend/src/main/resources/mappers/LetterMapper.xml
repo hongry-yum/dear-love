@@ -15,6 +15,8 @@
     <result property="recipientUsername" column="recipient_username"/>
     <result property="relationshipDay" column="relationship_day"/>
     <result property="createdAt" column="created_at"/>
+    <result property="readAt" column="read_at"/>
+    <result property="readByUsername" column="read_by_username"/>
   </resultMap>
 
   <insert id="insert" parameterType="com.dearlove.model.Letter">
@@ -23,14 +25,14 @@
   </insert>
 
   <select id="findRecent" resultMap="LetterResultMap">
-    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username, relationship_day, created_at
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username, relationship_day, created_at, read_at, read_by_username
     FROM letters
     ORDER BY created_at DESC
     LIMIT #{limit}
   </select>
 
   <select id="findById" resultMap="LetterResultMap">
-    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username, relationship_day, created_at
+    SELECT id, title, body, lat, lng, radius_m, place_label, owner_token, username, recipient_username, relationship_day, created_at, read_at, read_by_username
     FROM letters
     WHERE id = #{id}
   </select>
@@ -42,5 +44,11 @@
   <delete id="deleteByIdAndUsername">
     DELETE FROM letters WHERE id = #{id} AND username = #{username}
   </delete>
+
+  <update id="markReadIfUnread">
+    UPDATE letters
+    SET read_at = CURRENT_TIMESTAMP, read_by_username = #{username}
+    WHERE id = #{id} AND read_at IS NULL
+  </update>
 
 </mapper>

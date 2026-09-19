@@ -14,6 +14,8 @@ public record LetterDetailResponse(
         LocalDateTime createdAt,
         boolean unlocked,
         String lockReason,
-        double distance
+        double distance,
+        LocalDateTime readAt,
+        String readByUsername
 ) {
 }

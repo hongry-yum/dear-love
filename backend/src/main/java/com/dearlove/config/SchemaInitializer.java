@@ -61,6 +61,8 @@ public class SchemaInitializer implements CommandLineRunner {
             addColumnIfMissing(conn, "users", "partner_username", "VARCHAR(20) NULL AFTER password_hash");
             addColumnIfMissing(conn, "users", "relationship_start_date", "DATE NULL AFTER partner_username");
             addColumnIfMissing(conn, "users", "is_admin", "BOOLEAN NOT NULL DEFAULT FALSE AFTER relationship_start_date");
+            addColumnIfMissing(conn, "letters", "read_at", "DATETIME NULL AFTER relationship_day");
+            addColumnIfMissing(conn, "letters", "read_by_username", "VARCHAR(20) NULL AFTER read_at");
 
             // the "admin" account is always treated as an administrator, even if it already
             // existed before this flag was introduced or was created with an older code path

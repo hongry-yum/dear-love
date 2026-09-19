@@ -15,6 +15,8 @@ public class Letter {
     private String recipientUsername;
     private Integer relationshipDay;
     private LocalDateTime createdAt;
+    private LocalDateTime readAt;
+    private String readByUsername;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -51,4 +53,10 @@ public class Letter {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getReadAt() { return readAt; }
+    public void setReadAt(LocalDateTime readAt) { this.readAt = readAt; }
+
+    public String getReadByUsername() { return readByUsername; }
+    public void setReadByUsername(String readByUsername) { this.readByUsername = readByUsername; }
 }

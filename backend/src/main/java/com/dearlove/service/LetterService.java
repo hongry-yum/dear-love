@@ -81,7 +81,7 @@ public class LetterService {
                     return new LetterSummaryResponse(
                             r.getId(), r.getTitle(), r.getLat(), r.getLng(), r.getRadius(),
                             r.getPlaceLabel(), r.getUsername(), isPrivate, r.getRelationshipDay(), r.getCreatedAt(),
-                            lockReason == null, lockReason, distance
+                            lockReason == null, lockReason, distance, r.getReadAt(), r.getReadByUsername()
                     );
                 })
                 .toList();
@@ -99,9 +99,16 @@ public class LetterService {
         boolean unlocked = lockReason == null;
         boolean isPrivate = r.getRecipientUsername() != null;
         String body = unlocked ? r.getBody() : null;
+
+        if (unlocked && viewerUsername != null && !viewerUsername.equals(r.getUsername())) {
+            if (letterMapper.markReadIfUnread(id, viewerUsername) > 0) {
+                r = letterMapper.findById(id);
+            }
+        }
+
         return new LetterDetailResponse(
                 r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), isPrivate, r.getRelationshipDay(),
-                r.getRadius(), r.getCreatedAt(), unlocked, lockReason, distance
+                r.getRadius(), r.getCreatedAt(), unlocked, lockReason, distance, r.getReadAt(), r.getReadByUsername()
         );
     }
 
