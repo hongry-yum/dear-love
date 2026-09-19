@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getLetter, deleteLetter } from '../api.js'
-import { formatDate, formatDistance, myOwnerTokenFor } from '../utils.js'
+import { formatDate, formatDistance } from '../utils.js'
 
-export default function ReadModal({ letterId, me, onClose, onDeleted, showToast }) {
+export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, onDeleted, showToast }) {
   const [letter, setLetter] = useState(null)
   const [error, setError] = useState(false)
 
@@ -24,11 +24,12 @@ export default function ReadModal({ letterId, me, onClose, onDeleted, showToast 
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
+  const canDelete =
+    Boolean(myOwnerToken) || (auth && letter && letter.authorUsername === auth.username)
+
   async function handleDelete() {
-    const myToken = myOwnerTokenFor(letterId)
-    if (!myToken) return
     if (!confirm('이 편지를 삭제할까요? 되돌릴 수 없어요.')) return
-    const ok = await deleteLetter(letterId, myToken)
+    const ok = await deleteLetter(letterId, { token: auth?.token, ownerToken: myOwnerToken })
     if (ok) {
       onDeleted()
       onClose()
@@ -37,8 +38,6 @@ export default function ReadModal({ letterId, me, onClose, onDeleted, showToast 
       showToast('삭제하지 못했어요.')
     }
   }
-
-  const myToken = myOwnerTokenFor(letterId)
 
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -54,7 +53,9 @@ export default function ReadModal({ letterId, me, onClose, onDeleted, showToast 
           <>
             <div className="read-body-text">{letter.body}</div>
             <p className="read-meta">
-              {formatDate(letter.createdAt)} · {letter.placeLabel || '이 장소'}에서 쓴 편지
+              {formatDate(letter.createdAt)} ·{' '}
+              {letter.authorUsername ? `${letter.authorUsername}님이 ` : ''}
+              {letter.placeLabel || '이 장소'}에서 쓴 편지
             </p>
           </>
         )}
@@ -72,7 +73,7 @@ export default function ReadModal({ letterId, me, onClose, onDeleted, showToast 
         )}
 
         <div className="modal-actions">
-          {myToken && (
+          {canDelete && (
             <button className="btn btn-ghost" onClick={handleDelete}>🗑 삭제</button>
           )}
           <button className="btn btn-primary" onClick={onClose}>닫기</button>

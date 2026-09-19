@@ -417,3 +417,187 @@ body {
   .topbar { padding: 12px 14px; }
   .brand h1 { font-size: 17px; }
 }
+
+/* ---------- landing / auth ---------- */
+
+.landing {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(720px 480px at 18% 12%, #fdece9 0%, transparent 60%),
+    radial-gradient(760px 520px at 85% 85%, #f3dde6 0%, transparent 55%),
+    linear-gradient(160deg, #fff8f3 0%, #fbeee7 45%, #f6e2e4 100%);
+}
+
+.landing-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-size: 26px;
+  opacity: 0.35;
+}
+
+.landing-decor span {
+  position: absolute;
+  animation: dl-float 9s ease-in-out infinite;
+  filter: drop-shadow(0 6px 10px rgba(120, 70, 60, 0.15));
+}
+
+.landing-decor span:nth-child(1) { top: 12%; left: 8%; animation-delay: 0s; font-size: 30px; }
+.landing-decor span:nth-child(2) { top: 68%; left: 14%; animation-delay: 1.4s; font-size: 22px; }
+.landing-decor span:nth-child(3) { top: 22%; right: 10%; animation-delay: 2.6s; font-size: 26px; }
+.landing-decor span:nth-child(4) { top: 78%; right: 16%; animation-delay: 0.8s; font-size: 20px; }
+.landing-decor span:nth-child(5) { top: 48%; left: 50%; animation-delay: 3.4s; font-size: 24px; }
+
+@keyframes dl-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-22px) rotate(3deg); }
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.landing-title {
+  margin: 0 0 14px;
+  font-family: "Gowun Batang", serif;
+  font-size: 44px;
+  color: var(--ink);
+}
+
+.landing-copy {
+  margin: 0 0 26px;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+.auth-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(80, 40, 40, 0.14);
+  text-align: left;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 9px 0;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.auth-tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(201, 83, 107, 0.3);
+}
+
+.auth-card input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.auth-card input:focus {
+  outline: 2px solid var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.auth-error {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.auth-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 12px 18px;
+}
+
+.landing-guest {
+  margin-top: 18px;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.landing-guest:hover { color: var(--accent-dark); }
+
+@media (max-width: 480px) {
+  .landing-title { font-size: 36px; }
+  .auth-card { padding: 18px; }
+}
+
+/* ---------- top bar auth area ---------- */
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-username {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.auth-username strong {
+  color: var(--ink);
+}

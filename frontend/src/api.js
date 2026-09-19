@@ -1,5 +1,34 @@
 const API_BASE = 'https://84mr6v30b7.execute-api.ap-northeast-2.amazonaws.com'
 
+function authHeaders(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+async function readErrorMessage(res, fallback) {
+  const err = await res.json().catch(() => ({}))
+  return err.error || fallback
+}
+
+export async function signup(username, password) {
+  const res = await fetch(`${API_BASE}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  if (!res.ok) throw new Error(await readErrorMessage(res, '회원가입에 실패했어요.'))
+  return res.json()
+}
+
+export async function login(username, password) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  if (!res.ok) throw new Error(await readErrorMessage(res, '로그인에 실패했어요.'))
+  return res.json()
+}
+
 export async function listLetters(lat, lng) {
   const res = await fetch(`${API_BASE}/letters?lat=${lat}&lng=${lng}`)
   if (!res.ok) throw new Error('list failed')
@@ -13,23 +42,20 @@ export async function getLetter(id, lat, lng) {
   return res.json()
 }
 
-export async function createLetter(payload) {
+export async function createLetter(payload, token) {
   const res = await fetch(`${API_BASE}/letters`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify(payload),
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || 'create failed')
-  }
+  if (!res.ok) throw new Error(await readErrorMessage(res, 'create failed'))
   return res.json()
 }
 
-export async function deleteLetter(id, ownerToken) {
+export async function deleteLetter(id, { token, ownerToken } = {}) {
   const res = await fetch(`${API_BASE}/letters/${id}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ ownerToken }),
   })
   return res.ok

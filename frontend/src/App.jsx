@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGeolocation } from './hooks/useGeolocation.js'
+import { useAuth } from './hooks/useAuth.js'
 import { listLetters, createLetter, reverseGeocode } from './api.js'
-import { saveOwnerToken } from './utils.js'
+import { saveOwnerToken, myOwnerTokenFor } from './utils.js'
+import LandingPage from './components/LandingPage.jsx'
 import MapView from './components/MapView.jsx'
 import LetterPanel from './components/LetterPanel.jsx'
 import WriteModal from './components/WriteModal.jsx'
@@ -12,6 +14,8 @@ const POLL_INTERVAL_MS = 6000
 
 export default function App() {
   const { me, status: geoStatus } = useGeolocation()
+  const { auth, doLogin, doSignup, logout, clearInvalidSession } = useAuth()
+  const [entered, setEntered] = useState(() => Boolean(auth))
   const [letters, setLetters] = useState([])
   const [writeOpen, setWriteOpen] = useState(false)
   const [readLetterId, setReadLetterId] = useState(null)
@@ -35,33 +39,69 @@ export default function App() {
   }, [me, showToast])
 
   useEffect(() => {
-    refreshLetters()
-  }, [refreshLetters])
+    if (entered) refreshLetters()
+  }, [entered, refreshLetters])
 
   useEffect(() => {
+    if (!entered) return
     const id = setInterval(refreshLetters, POLL_INTERVAL_MS)
     return () => clearInterval(id)
-  }, [refreshLetters])
+  }, [entered, refreshLetters])
+
+  async function handleLogin(username, password) {
+    await doLogin(username, password)
+    setEntered(true)
+    showToast(`다시 오셨네요, ${username}님 💌`)
+  }
+
+  async function handleSignup(username, password) {
+    await doSignup(username, password)
+    setEntered(true)
+    showToast(`가입을 환영해요, ${username}님! 첫 편지를 남겨보세요.`)
+  }
+
+  function handleGuest() {
+    setEntered(true)
+  }
+
+  function handleLogout() {
+    logout()
+    setEntered(false)
+    showToast('로그아웃했어요.')
+  }
+
+  function openWrite() {
+    if (!auth) {
+      showToast('편지를 쓰려면 먼저 로그인해주세요.')
+      setEntered(false)
+      return
+    }
+    setWriteOpen(true)
+  }
 
   async function handleSeal({ title, body, radius }) {
-    if (!me) return
+    if (!me || !auth) return
     try {
       const placeLabel = await reverseGeocode(me.lat, me.lng)
-      const { id, ownerToken } = await createLetter({
-        title,
-        body,
-        lat: me.lat,
-        lng: me.lng,
-        radius,
-        placeLabel,
-      })
+      const { id, ownerToken } = await createLetter(
+        { title, body, lat: me.lat, lng: me.lng, radius, placeLabel },
+        auth.token
+      )
       saveOwnerToken(id, ownerToken)
       await refreshLetters()
       setWriteOpen(false)
       showToast('💌 편지를 이 자리에 봉인했어요. 이제 다른 사람도 같은 장소에서 열어볼 수 있어요.')
-    } catch {
-      showToast('편지를 봉인하지 못했어요. 잠시 후 다시 시도해주세요.')
+    } catch (err) {
+      if (err.message?.includes('로그인')) {
+        clearInvalidSession()
+        setEntered(false)
+      }
+      showToast(err.message || '편지를 봉인하지 못했어요. 잠시 후 다시 시도해주세요.')
     }
+  }
+
+  if (!entered) {
+    return <LandingPage onLogin={handleLogin} onSignup={handleSignup} onGuest={handleGuest} />
   }
 
   return (
@@ -74,9 +114,19 @@ export default function App() {
             <p className="tagline">이 자리에 두고 간 마음은, 같은 곳에서만 다시 열립니다.</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setWriteOpen(true)}>
-          <span className="icon">✍️</span> 편지 쓰기
-        </button>
+        <div className="auth-status">
+          {auth ? (
+            <>
+              <span className="auth-username"><strong>{auth.username}</strong>님</span>
+              <button className="btn btn-ghost" onClick={handleLogout}>로그아웃</button>
+            </>
+          ) : (
+            <button className="btn btn-ghost" onClick={() => setEntered(false)}>로그인</button>
+          )}
+          <button className="btn btn-primary" onClick={openWrite}>
+            <span className="icon">✍️</span> 편지 쓰기
+          </button>
+        </div>
       </header>
 
       <main className="layout">
@@ -98,6 +148,8 @@ export default function App() {
         <ReadModal
           letterId={readLetterId}
           me={me}
+          auth={auth}
+          myOwnerToken={myOwnerTokenFor(readLetterId)}
           onClose={() => setReadLetterId(null)}
           onDeleted={refreshLetters}
           showToast={showToast}
