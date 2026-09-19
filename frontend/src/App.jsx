@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGeolocation } from './hooks/useGeolocation.js'
 import { useAuth } from './hooks/useAuth.js'
 import { listLetters, createLetter, reverseGeocode, getProfile } from './api.js'
@@ -18,6 +18,7 @@ export default function App() {
   const { auth, doLogin, doSignup, logout, clearInvalidSession } = useAuth()
   const [entered, setEntered] = useState(() => Boolean(auth))
   const [letters, setLetters] = useState([])
+  const [privacyFilter, setPrivacyFilter] = useState('all') // 'all' | 'partner' | 'public'
   const [profile, setProfile] = useState(null)
   const [writeOpen, setWriteOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -58,6 +59,12 @@ export default function App() {
       setProfile(null)
     }
   }, [entered, auth])
+
+  const visibleLetters = useMemo(() => {
+    if (privacyFilter === 'partner') return letters.filter((l) => l.isPrivate)
+    if (privacyFilter === 'public') return letters.filter((l) => !l.isPrivate)
+    return letters
+  }, [letters, privacyFilter])
 
   async function handleLogin(username, password) {
     await doLogin(username, password)
@@ -148,8 +155,15 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <MapView me={me} letters={letters} onLetterClick={setReadLetterId} />
-        <LetterPanel letters={letters} geoStatus={geoStatus} auth={auth} onLetterClick={setReadLetterId} />
+        <MapView me={me} letters={visibleLetters} onLetterClick={setReadLetterId} />
+        <LetterPanel
+          letters={visibleLetters}
+          geoStatus={geoStatus}
+          auth={auth}
+          privacyFilter={privacyFilter}
+          onPrivacyFilterChange={setPrivacyFilter}
+          onLetterClick={setReadLetterId}
+        />
       </main>
 
       {writeOpen && (

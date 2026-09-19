@@ -9,7 +9,7 @@ function vhFromPx(px) {
   return (px / window.innerHeight) * 100
 }
 
-export default function LetterPanel({ letters, geoStatus, auth, onLetterClick }) {
+export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, onPrivacyFilterChange, onLetterClick }) {
   const [tab, setTab] = useState('mine') // 'mine' | 'others'
   const [sort, setSort] = useState('distance') // 'distance' | 'recent'
   const [expanded, setExpanded] = useState(false)
@@ -144,6 +144,30 @@ export default function LetterPanel({ letters, geoStatus, auth, onLetterClick })
           </button>
         </div>
       )}
+
+      <div className="panel-sort">
+        <button
+          type="button"
+          className={`sort-chip ${privacyFilter === 'all' ? 'active' : ''}`}
+          onClick={() => onPrivacyFilterChange('all')}
+        >
+          전체
+        </button>
+        <button
+          type="button"
+          className={`sort-chip ${privacyFilter === 'partner' ? 'active' : ''}`}
+          onClick={() => onPrivacyFilterChange('partner')}
+        >
+          ❤️ 연인
+        </button>
+        <button
+          type="button"
+          className={`sort-chip ${privacyFilter === 'public' ? 'active' : ''}`}
+          onClick={() => onPrivacyFilterChange('public')}
+        >
+          공개
+        </button>
+      </div>
 
       <div className="panel-sort">
         <button
