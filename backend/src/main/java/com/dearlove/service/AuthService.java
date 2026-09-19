@@ -22,6 +22,7 @@ public class AuthService {
 
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-z0-9_]{3,20}$");
     private static final int SESSION_DAYS = 30;
+    private static final String ADMIN_USERNAME = "admin";
 
     private final UserMapper userMapper;
     private final SessionMapper sessionMapper;
@@ -50,6 +51,7 @@ public class AuthService {
         User user = new User();
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(password));
+        user.setAdmin(ADMIN_USERNAME.equals(username));
         try {
             userMapper.insert(user);
         } catch (DataIntegrityViolationException e) {

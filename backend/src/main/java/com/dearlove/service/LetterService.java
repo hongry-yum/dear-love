@@ -71,12 +71,13 @@ public class LetterService {
     }
 
     public LetterListResponse listLetters(double lat, double lng, String viewerUsername) {
+        boolean admin = isAdminViewer(viewerUsername);
         List<Letter> rows = letterMapper.findRecent(LIST_LIMIT);
         List<LetterSummaryResponse> letters = rows.stream()
                 .map(r -> {
                     double distance = haversineMeters(lat, lng, r.getLat(), r.getLng());
                     boolean isPrivate = r.getRecipientUsername() != null;
-                    String lockReason = lockReason(r, distance, viewerUsername);
+                    String lockReason = admin ? null : lockReason(r, distance, viewerUsername);
                     return new LetterSummaryResponse(
                             r.getId(), r.getTitle(), r.getLat(), r.getLng(), r.getRadius(),
                             r.getPlaceLabel(), r.getUsername(), isPrivate, r.getRelationshipDay(), r.getCreatedAt(),
@@ -93,7 +94,8 @@ public class LetterService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "편지를 찾을 수 없어요.");
         }
         double distance = haversineMeters(lat, lng, r.getLat(), r.getLng());
-        String lockReason = lockReason(r, distance, viewerUsername);
+        boolean admin = isAdminViewer(viewerUsername);
+        String lockReason = admin ? null : lockReason(r, distance, viewerUsername);
         boolean unlocked = lockReason == null;
         boolean isPrivate = r.getRecipientUsername() != null;
         String body = unlocked ? r.getBody() : null;
@@ -101,6 +103,13 @@ public class LetterService {
                 r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), isPrivate, r.getRelationshipDay(),
                 r.getRadius(), r.getCreatedAt(), unlocked, lockReason, distance
         );
+    }
+
+    /** Admins can open any letter regardless of distance or intended recipient. */
+    private boolean isAdminViewer(String viewerUsername) {
+        if (viewerUsername == null) return false;
+        User viewer = userMapper.findByUsername(viewerUsername);
+        return viewer != null && viewer.isAdmin();
     }
 
     /** Returns null when unlocked, else "recipient" or "distance". */

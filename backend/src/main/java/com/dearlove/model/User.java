@@ -8,6 +8,7 @@ public class User {
     private String passwordHash;
     private String partnerUsername;
     private LocalDate relationshipStartDate;
+    private boolean admin;
     private LocalDateTime createdAt;
 
     public String getUsername() { return username; }
@@ -21,6 +22,9 @@ public class User {
 
     public LocalDate getRelationshipStartDate() { return relationshipStartDate; }
     public void setRelationshipStartDate(LocalDate relationshipStartDate) { this.relationshipStartDate = relationshipStartDate; }
+
+    public boolean isAdmin() { return admin; }
+    public void setAdmin(boolean admin) { this.admin = admin; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

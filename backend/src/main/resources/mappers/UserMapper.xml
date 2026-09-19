@@ -7,15 +7,16 @@
     <result property="passwordHash" column="password_hash"/>
     <result property="partnerUsername" column="partner_username"/>
     <result property="relationshipStartDate" column="relationship_start_date"/>
+    <result property="admin" column="is_admin"/>
     <result property="createdAt" column="created_at"/>
   </resultMap>
 
   <insert id="insert" parameterType="com.dearlove.model.User">
-    INSERT INTO users (username, password_hash) VALUES (#{username}, #{passwordHash})
+    INSERT INTO users (username, password_hash, is_admin) VALUES (#{username}, #{passwordHash}, #{admin})
   </insert>
 
   <select id="findByUsername" resultMap="UserResultMap">
-    SELECT username, password_hash, partner_username, relationship_start_date, created_at
+    SELECT username, password_hash, partner_username, relationship_start_date, is_admin, created_at
     FROM users WHERE username = #{username}
   </select>
 
