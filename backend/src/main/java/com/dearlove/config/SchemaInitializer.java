@@ -57,6 +57,7 @@ public class SchemaInitializer implements CommandLineRunner {
             stmt.execute(SESSIONS_DDL);
             addColumnIfMissing(conn, "letters", "username", "VARCHAR(20) NULL AFTER owner_token");
             addColumnIfMissing(conn, "letters", "recipient_username", "VARCHAR(20) NULL AFTER username");
+            addColumnIfMissing(conn, "letters", "relationship_day", "INT NULL AFTER recipient_username");
             addColumnIfMissing(conn, "users", "partner_username", "VARCHAR(20) NULL AFTER password_hash");
             addColumnIfMissing(conn, "users", "relationship_start_date", "DATE NULL AFTER partner_username");
         }

@@ -9,6 +9,7 @@ public record LetterDetailResponse(
         String placeLabel,
         String authorUsername,
         boolean isPrivate,
+        Integer relationshipDay,
         int radius,
         LocalDateTime createdAt,
         boolean unlocked,

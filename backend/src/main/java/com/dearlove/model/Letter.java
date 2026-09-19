@@ -13,6 +13,7 @@ public class Letter {
     private String ownerToken;
     private String username;
     private String recipientUsername;
+    private Integer relationshipDay;
     private LocalDateTime createdAt;
 
     public String getId() { return id; }
@@ -44,6 +45,9 @@ public class Letter {
 
     public String getRecipientUsername() { return recipientUsername; }
     public void setRecipientUsername(String recipientUsername) { this.recipientUsername = recipientUsername; }
+
+    public Integer getRelationshipDay() { return relationshipDay; }
+    public void setRelationshipDay(Integer relationshipDay) { this.relationshipDay = relationshipDay; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

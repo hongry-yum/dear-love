@@ -56,7 +56,9 @@ export default function ReadModal({ letterId, me, auth, myOwnerToken, onClose, o
           <>
             <div className="read-body-text">{letter.body}</div>
             <p className="read-meta">
-              {formatDate(letter.createdAt)} ·{' '}
+              {formatDate(letter.createdAt)}
+              {letter.isPrivate && letter.relationshipDay != null ? ` (연애 ${letter.relationshipDay}일째)` : ''}
+              {' · '}
               {letter.authorUsername ? `${letter.authorUsername}님이 ` : ''}
               {letter.placeLabel || '이 장소'}에서 쓴 편지
               {letter.isPrivate ? ' (나에게만)' : ''}

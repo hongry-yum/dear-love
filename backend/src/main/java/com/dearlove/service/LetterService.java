@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,12 +40,16 @@ public class LetterService {
         }
 
         String recipientUsername = null;
+        Integer relationshipDay = null;
         if (req.recipientUsername() != null && !req.recipientUsername().isBlank()) {
             recipientUsername = AuthService.normalizeUsername(req.recipientUsername());
             User author = userMapper.findByUsername(username);
             if (author == null || author.getPartnerUsername() == null
                     || !author.getPartnerUsername().equals(recipientUsername)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "등록된 연인에게만 편지를 보낼 수 있어요.");
+            }
+            if (author.getRelationshipStartDate() != null) {
+                relationshipDay = (int) (ChronoUnit.DAYS.between(author.getRelationshipStartDate(), LocalDate.now()) + 1);
             }
         }
 
@@ -58,6 +64,7 @@ public class LetterService {
         letter.setOwnerToken(UUID.randomUUID().toString());
         letter.setUsername(username);
         letter.setRecipientUsername(recipientUsername);
+        letter.setRelationshipDay(relationshipDay);
 
         letterMapper.insert(letter);
         return new CreateLetterResponse(letter.getId(), letter.getOwnerToken());
@@ -72,7 +79,7 @@ public class LetterService {
                     String lockReason = lockReason(r, distance, viewerUsername);
                     return new LetterSummaryResponse(
                             r.getId(), r.getTitle(), r.getLat(), r.getLng(), r.getRadius(),
-                            r.getPlaceLabel(), r.getUsername(), isPrivate, r.getCreatedAt(),
+                            r.getPlaceLabel(), r.getUsername(), isPrivate, r.getRelationshipDay(), r.getCreatedAt(),
                             lockReason == null, lockReason, distance
                     );
                 })
@@ -91,7 +98,7 @@ public class LetterService {
         boolean isPrivate = r.getRecipientUsername() != null;
         String body = unlocked ? r.getBody() : null;
         return new LetterDetailResponse(
-                r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), isPrivate,
+                r.getId(), r.getTitle(), body, r.getPlaceLabel(), r.getUsername(), isPrivate, r.getRelationshipDay(),
                 r.getRadius(), r.getCreatedAt(), unlocked, lockReason, distance
         );
     }

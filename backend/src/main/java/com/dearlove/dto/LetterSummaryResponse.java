@@ -11,6 +11,7 @@ public record LetterSummaryResponse(
         String placeLabel,
         String authorUsername,
         boolean isPrivate,
+        Integer relationshipDay,
         LocalDateTime createdAt,
         boolean unlocked,
         String lockReason,
