@@ -75,7 +75,7 @@ npm run build      # dist/ 로 정적 빌드
 - `src/hooks/useAuth.js` — 로그인 상태 관리 (세션 토큰을 `localStorage`에 보관)
 - `src/components/LandingPage.jsx` — 시작 페이지 (로그인/회원가입, 둘러보기)
 - `src/components/ProfileModal.jsx` — 프로필 (연인 등록/수정/해제, 만난 날짜 수)
-- `src/components/MapView.jsx` — Leaflet 지도 (편지 마커, 내 위치; 대상 지정 편지는 ❤️ 아이콘)
+- `src/components/MapView.jsx` — Leaflet 지도 (편지 마커, 내 위치, 현재 위치로 이동 버튼; 대상 지정 편지는 ❤️ 아이콘)
 - `src/components/WriteModal.jsx`, `ReadModal.jsx` — 편지 쓰기(받는 사람 선택 포함)/열람
 - `src/api.js` — 백엔드 API 호출
 

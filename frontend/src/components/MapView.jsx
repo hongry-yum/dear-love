@@ -19,6 +19,8 @@ export default function MapView({ me, letters, onLetterClick }) {
   const markersRef = useRef(new Map())
   const onLetterClickRef = useRef(onLetterClick)
   onLetterClickRef.current = onLetterClick
+  const meRef = useRef(me)
+  meRef.current = me
 
   useEffect(() => {
     const map = L.map(containerRef.current, { zoomControl: true }).setView([37.5665, 126.978], 15)
@@ -90,5 +92,26 @@ export default function MapView({ me, letters, onLetterClick }) {
     }
   }, [letters])
 
-  return <div id="map" ref={containerRef} />
+  function handleLocate() {
+    const map = mapRef.current
+    const current = meRef.current
+    if (!map || !current) return
+    map.flyTo([current.lat, current.lng], Math.max(map.getZoom(), 16), { duration: 0.6 })
+  }
+
+  return (
+    <div className="map-wrap">
+      <div id="map" ref={containerRef} />
+      <button
+        type="button"
+        className="locate-btn"
+        onClick={handleLocate}
+        disabled={!me}
+        aria-label="현재 위치로 이동"
+        title="현재 위치로 이동"
+      >
+        🧭
+      </button>
+    </div>
+  )
 }
