@@ -1,9 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { formatDate, formatDistance } from '../utils.js'
+
+const COLLAPSED_VH = 42
+const EXPANDED_VH = 82
+const TAP_THRESHOLD_PX = 6
+
+function vhFromPx(px) {
+  return (px / window.innerHeight) * 100
+}
 
 export default function LetterPanel({ letters, geoStatus, auth, onLetterClick }) {
   const [tab, setTab] = useState('mine') // 'mine' | 'others'
   const [sort, setSort] = useState('distance') // 'distance' | 'recent'
+  const [expanded, setExpanded] = useState(false)
+  const panelRef = useRef(null)
+  const dragRef = useRef({ dragging: false, startY: 0 })
 
   const showTabs = Boolean(auth)
 
@@ -51,8 +62,62 @@ export default function LetterPanel({ letters, geoStatus, auth, onLetterClick })
       </>
     )
 
+  function handlePointerDown(e) {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.classList.add('dragging')
+    dragRef.current = {
+      dragging: true,
+      startY: e.clientY,
+      startHeightVh: vhFromPx(panel.getBoundingClientRect().height),
+    }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function handlePointerMove(e) {
+    if (!dragRef.current.dragging) return
+    const panel = panelRef.current
+    if (!panel) return
+    const deltaVh = vhFromPx(dragRef.current.startY - e.clientY) // dragging up => positive => taller
+    const newVh = Math.min(EXPANDED_VH, Math.max(COLLAPSED_VH, dragRef.current.startHeightVh + deltaVh))
+    panel.style.setProperty('--panel-max-height', `${newVh}vh`)
+  }
+
+  function handlePointerUp(e) {
+    if (!dragRef.current.dragging) return
+    const panel = panelRef.current
+    const deltaY = dragRef.current.startY - e.clientY
+    dragRef.current.dragging = false
+    if (panel) panel.classList.remove('dragging')
+
+    if (Math.abs(deltaY) <= TAP_THRESHOLD_PX) {
+      setExpanded((prev) => !prev)
+    } else if (panel) {
+      const currentVh = vhFromPx(panel.getBoundingClientRect().height)
+      const mid = (COLLAPSED_VH + EXPANDED_VH) / 2
+      setExpanded(currentVh > mid)
+    }
+    if (panel) panel.style.removeProperty('--panel-max-height')
+  }
+
   return (
-    <aside className="panel">
+    <aside className={`panel ${expanded ? 'expanded' : ''}`} ref={panelRef}>
+      <div
+        className="panel-handle"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        role="button"
+        tabIndex={0}
+        aria-label={expanded ? '편지 목록 접기' : '편지 목록 펼치기'}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') setExpanded((prev) => !prev)
+        }}
+      >
+        <span className="handle-bar" />
+      </div>
+
       <div className="panel-header">
         <h2>편지 목록</h2>
         <span className="count">{sorted.length}통</span>

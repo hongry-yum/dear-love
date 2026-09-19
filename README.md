@@ -77,6 +77,7 @@ npm run build      # dist/ 로 정적 빌드
 - `src/components/ProfileModal.jsx` — 프로필 (연인 등록/수정/해제, 만난 날짜 수)
 - `src/components/MapView.jsx` — Leaflet 지도 (편지 마커, 내 위치, 현재 위치로 이동 버튼; 대상 지정 편지는 ❤️ 아이콘)
 - `src/components/WriteModal.jsx`, `ReadModal.jsx` — 편지 쓰기(받는 사람 선택 포함)/열람
+- `src/components/LetterPanel.jsx` — 편지 목록 (모바일에서는 손잡이를 탭하거나 위아래로 드래그해 목록 패널을 넓게/좁게 볼 수 있어요)
 - `src/api.js` — 백엔드 API 호출
 
 ## 배포
