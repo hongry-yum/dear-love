@@ -49,32 +49,42 @@ mvn clean package -DskipTests
 aws lambda update-function-code --function-name dear-love-api --zip-file fileb://target/dear-love-api.jar
 ```
 
-## 로컬 실행 (프론트엔드)
+## 프론트엔드 (React)
 
-빌드 과정 없이 정적 파일만으로 동작합니다. 실제 배포된 AWS API(`app.js`의 `API_BASE`)를 그대로 사용합니다.
+`frontend/` 폴더의 React + Vite 앱입니다. 실제 배포된 AWS API(`frontend/src/api.js`의 `API_BASE`)를 그대로 호출합니다.
 
 ```bash
-npx serve .
-# 또는
-python3 -m http.server 8000
+cd frontend
+npm install
+npm run dev       # 로컬 개발 서버
+npm run build      # dist/ 로 정적 빌드
 ```
 
 > 위치 정보 API는 보안상 `https://` 또는 `localhost` 환경에서만 동작합니다.
 
+구조:
+- `src/App.jsx` — 상태/오케스트레이션
+- `src/hooks/useGeolocation.js` — 실시간 위치 추적
+- `src/components/MapView.jsx` — Leaflet 지도 (편지 마커, 내 위치)
+- `src/components/WriteModal.jsx`, `ReadModal.jsx` — 편지 쓰기/열람
+- `src/api.js` — 백엔드 API 호출
+
 ## 배포
 
-정적 파일(`index.html`, `style.css`, `app.js`)만으로 구성되어 GitHub Pages로 바로 배포할 수 있습니다.
+`frontend/`를 빌드해 GitHub Pages로 배포하는 GitHub Actions 워크플로가 이미 구성되어 있습니다
+(`.github/workflows/deploy.yml`, `main` 브랜치의 `frontend/` 변경 시 자동 실행).
 
-1. 저장소 **Settings → Pages**로 이동
-2. Source를 `Deploy from a branch`, Branch를 `main` / `(root)`로 설정
-3. 저장 후 `https://<username>.github.io/dear-love/` 에서 접속
+1. 저장소 **Settings → Pages** → Source를 **GitHub Actions**로 설정 (최초 1회)
+2. `main`에 푸시하면 자동으로 빌드 후 배포됩니다
+3. `https://<username>.github.io/dear-love/` 에서 접속 (`frontend/vite.config.js`의 `base`가 이 경로와 일치해야 합니다)
 
 ## 기술 스택
 
-- Vanilla HTML / CSS / JavaScript (빌드 도구 없음)
-- [Leaflet.js](https://leafletjs.com/) — 지도
+- **프론트엔드**: React 19 + Vite, [Leaflet.js](https://leafletjs.com/) 지도
+- **백엔드**: Spring Boot 3 (Maven), MyBatis, AWS Lambda
+- **DB**: AWS RDS MySQL
 - [OpenStreetMap](https://www.openstreetmap.org/) 타일 + [Nominatim](https://nominatim.org/) 역지오코딩
-- 브라우저 Geolocation API, localStorage
+- 브라우저 Geolocation API
 
 ## 라이선스
 

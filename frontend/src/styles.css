@@ -18,7 +18,7 @@
 
 * { box-sizing: border-box; }
 
-html, body {
+html, body, #root {
   height: 100%;
   margin: 0;
 }
@@ -236,8 +236,6 @@ body {
   margin: 0;
 }
 
-.letter-list:not(:empty) + .empty-hint { display: none; }
-
 /* modal */
 .modal-backdrop {
   position: fixed;
@@ -249,8 +247,6 @@ body {
   z-index: 100;
   padding: 16px;
 }
-
-.modal-backdrop[hidden] { display: none; }
 
 .modal {
   background: var(--surface);
@@ -300,9 +296,9 @@ body {
   margin: 12px 0 6px;
 }
 
-#letter-title-input,
-#letter-body-input,
-#radius-select {
+.modal input[type="text"],
+.modal textarea,
+.modal select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -313,15 +309,15 @@ body {
   color: var(--ink);
 }
 
-#letter-body-input {
+.modal textarea {
   resize: vertical;
   line-height: 1.6;
   font-family: "Gowun Batang", serif;
 }
 
-#letter-title-input:focus,
-#letter-body-input:focus,
-#radius-select:focus {
+.modal input[type="text"]:focus,
+.modal textarea:focus,
+.modal select:focus {
   outline: 2px solid var(--accent-soft);
   border-color: var(--accent);
 }
@@ -346,7 +342,7 @@ body {
   margin-top: 20px;
 }
 
-#read-body {
+.read-body-text {
   font-family: "Gowun Batang", serif;
   font-size: 15px;
   line-height: 1.85;
@@ -393,8 +389,6 @@ body {
   z-index: 200;
   box-shadow: var(--shadow);
 }
-
-.toast[hidden] { display: none; }
 
 /* leaflet marker tweaks */
 .dl-marker {
