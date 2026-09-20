@@ -12,6 +12,7 @@ import ProfileModal from './components/ProfileModal.jsx'
 import Toast from './components/Toast.jsx'
 
 const POLL_INTERVAL_MS = 6000
+const NEARBY_PUBLIC_RADIUS_M = 1000
 
 export default function App() {
   const { me, status: geoStatus } = useGeolocation()
@@ -61,10 +62,15 @@ export default function App() {
   }, [entered, auth])
 
   const visibleLetters = useMemo(() => {
-    if (privacyFilter === 'partner') return letters.filter((l) => l.isPrivate)
-    if (privacyFilter === 'public') return letters.filter((l) => !l.isPrivate)
-    return letters
-  }, [letters, privacyFilter])
+    // Public letters only clutter the map/list once they're far away; letters
+    // addressed to someone, and letters the viewer wrote themselves, always stay visible.
+    const nearby = letters.filter(
+      (l) => l.isPrivate || l.authorUsername === auth?.username || l.distance <= NEARBY_PUBLIC_RADIUS_M
+    )
+    if (privacyFilter === 'partner') return nearby.filter((l) => l.isPrivate)
+    if (privacyFilter === 'public') return nearby.filter((l) => !l.isPrivate)
+    return nearby
+  }, [letters, privacyFilter, auth])
 
   async function handleLogin(username, password) {
     await doLogin(username, password)

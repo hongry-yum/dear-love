@@ -324,7 +324,35 @@ body {
 .dist-badge.unlocked { background: #e7f4ec; color: var(--unlocked); }
 .dist-badge.locked { background: #f4efe9; color: var(--locked); }
 
+.letter-more {
+  margin-bottom: 10px;
+}
+
+.more-btn {
+  width: 100%;
+  border: 1px dashed var(--border);
+  background: transparent;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.more-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
 .empty-hint {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--ink-soft);
   font-size: 13px;
@@ -508,8 +536,8 @@ body {
   .panel {
     border-left: none;
     border-top: 1px solid var(--border);
-    max-height: var(--panel-max-height, 42vh);
-    transition: max-height 0.25s ease;
+    height: var(--panel-max-height, 42vh);
+    transition: height 0.25s ease;
   }
   .panel.expanded { --panel-max-height: 82vh; }
   .panel.dragging { transition: none; }

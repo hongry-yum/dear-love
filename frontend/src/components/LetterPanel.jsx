@@ -1,18 +1,24 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatDate, formatDistance } from '../utils.js'
 
 const COLLAPSED_VH = 42
 const EXPANDED_VH = 82
 const TAP_THRESHOLD_PX = 6
+const PAGE_SIZE = 10
 
 function vhFromPx(px) {
   return (px / window.innerHeight) * 100
+}
+
+function formatCount(n) {
+  return n >= 100 ? '99+' : String(n)
 }
 
 export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, onPrivacyFilterChange, onLetterClick }) {
   const [tab, setTab] = useState('mine') // 'mine' | 'others'
   const [sort, setSort] = useState('distance') // 'distance' | 'recent'
   const [expanded, setExpanded] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const panelRef = useRef(null)
   const dragRef = useRef({ dragging: false, startY: 0 })
 
@@ -33,6 +39,12 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
     }
     return list
   }, [filtered, sort])
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [tab, sort, privacyFilter])
+
+  const visibleSorted = sorted.slice(0, visibleCount)
 
   const emptyHint = !showTabs
     ? (
@@ -119,7 +131,7 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
 
       <div className="panel-header">
         <h2>편지 목록</h2>
-        <span className="count">{sorted.length}통</span>
+        <span className="count">{formatCount(sorted.length)}통</span>
       </div>
       <div className={`panel-status ${geoStatus.kind === 'ok' ? 'ok' : geoStatus.kind === 'err' ? 'err' : ''}`}>
         {geoStatus.text}
@@ -189,7 +201,7 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
         <p className="empty-hint">{emptyHint}</p>
       ) : (
         <ul className="letter-list">
-          {sorted.map((letter) => (
+          {visibleSorted.map((letter) => (
             <li key={letter.id} className="letter-card" onClick={() => onLetterClick(letter.id)}>
               <span className="status-icon">{letter.isPrivate ? '❤️' : letter.unlocked ? '🔓' : '🔒'}</span>
               <div className="info">
@@ -214,6 +226,13 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
               </div>
             </li>
           ))}
+          {sorted.length > visibleSorted.length && (
+            <li className="letter-more">
+              <button type="button" className="more-btn" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
+                더 보기 ({sorted.length - visibleSorted.length}통 더 있어요)
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </aside>
