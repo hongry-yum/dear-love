@@ -14,7 +14,7 @@ function formatCount(n) {
   return n >= 100 ? '99+' : String(n)
 }
 
-export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, onPrivacyFilterChange, onLetterClick }) {
+export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, onPrivacyFilterChange, onLetterClick, onExpandedChange }) {
   const [tab, setTab] = useState('mine') // 'mine' | 'others'
   const [sort, setSort] = useState('distance') // 'distance' | 'recent'
   const [expanded, setExpanded] = useState(false)
@@ -43,6 +43,10 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
   }, [tab, sort, privacyFilter])
+
+  useEffect(() => {
+    onExpandedChange?.(expanded)
+  }, [expanded, onExpandedChange])
 
   const visibleSorted = sorted.slice(0, visibleCount)
 

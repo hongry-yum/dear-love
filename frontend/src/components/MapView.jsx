@@ -10,7 +10,7 @@ function iconFor(emoji, extraClass = '') {
   })
 }
 
-export default function MapView({ me, letters, onLetterClick }) {
+export default function MapView({ me, letters, onLetterClick, hideLocateButton }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const centeredRef = useRef(false)
@@ -104,7 +104,7 @@ export default function MapView({ me, letters, onLetterClick }) {
       <div id="map" ref={containerRef} />
       <button
         type="button"
-        className="locate-btn"
+        className={`locate-btn ${hideLocateButton ? 'locate-btn-hidden' : ''}`}
         onClick={handleLocate}
         disabled={!me}
         aria-label="현재 위치로 이동"

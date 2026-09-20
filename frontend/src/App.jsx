@@ -24,6 +24,7 @@ export default function App() {
   const [writeOpen, setWriteOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [readLetterId, setReadLetterId] = useState(null)
+  const [panelExpanded, setPanelExpanded] = useState(false)
   const [toast, setToast] = useState('')
   const toastTimerRef = useRef(null)
 
@@ -161,7 +162,7 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <MapView me={me} letters={visibleLetters} onLetterClick={setReadLetterId} />
+        <MapView me={me} letters={visibleLetters} onLetterClick={setReadLetterId} hideLocateButton={panelExpanded} />
         <LetterPanel
           letters={visibleLetters}
           geoStatus={geoStatus}
@@ -169,6 +170,7 @@ export default function App() {
           privacyFilter={privacyFilter}
           onPrivacyFilterChange={setPrivacyFilter}
           onLetterClick={setReadLetterId}
+          onExpandedChange={setPanelExpanded}
         />
       </main>
 

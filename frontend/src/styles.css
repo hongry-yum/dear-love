@@ -548,6 +548,11 @@ body {
     right: 12px;
     bottom: calc(42vh + 24px);
   }
+  .locate-btn.locate-btn-hidden {
+    /* Only makes sense over the map — once the letter panel is pulled up over it, hide it
+       instead of floating on top of the list. */
+    display: none;
+  }
   .panel-handle {
     display: flex;
     align-items: center;
