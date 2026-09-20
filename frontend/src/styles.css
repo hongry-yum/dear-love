@@ -541,6 +541,13 @@ body {
   }
   .panel.expanded { --panel-max-height: 82vh; }
   .panel.dragging { transition: none; }
+  .locate-btn {
+    /* Pin to the viewport instead of the map's own corner: the map itself shrinks
+       as the letter panel is dragged open, which used to drag the button along with it. */
+    position: fixed;
+    right: 12px;
+    bottom: calc(42vh + 24px);
+  }
   .panel-handle {
     display: flex;
     align-items: center;
