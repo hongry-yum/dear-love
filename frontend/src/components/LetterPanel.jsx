@@ -20,9 +20,8 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
 
   const filtered = useMemo(() => {
     if (!showTabs) return letters
-    return letters.filter((letter) =>
-      tab === 'mine' ? letter.authorUsername === auth.username : letter.authorUsername !== auth.username
-    )
+    if (tab === 'mine') return letters.filter((letter) => letter.authorUsername === auth.username)
+    return letters.filter((letter) => letter.isPrivate && letter.lockReason !== 'recipient')
   }, [letters, showTabs, tab, auth])
 
   const sorted = useMemo(() => {
@@ -54,11 +53,11 @@ export default function LetterPanel({ letters, geoStatus, auth, privacyFilter, o
       </>
     ) : (
       <>
-        아직 발견한 편지가 없어요.
+        아직 나에게 온 편지가 없어요.
         <br />
-        다른 사람이 남긴 편지가 있는 장소로
+        연인이 나에게 편지를 남기면
         <br />
-        가까이 가보세요.
+        여기에서 확인할 수 있어요.
       </>
     )
 
